@@ -1,11 +1,12 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
 	"fmt"
+	"log"
+	"net"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +22,8 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("connect called")
+		//fmt.Println("connect called")
+		connectToServer()
 	},
 }
 
@@ -37,4 +39,33 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// connectCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func connectToServer() {
+	server, err := net.ResolveUDPAddr("udp", ":8088")
+	if err != nil {
+		log.Panic("Failed to connect", err.Error())
+
+	}
+
+	connection, err := net.DialUDP("udp", nil, server)
+	if err != nil {
+		log.Panic("Listen Failed: ", err.Error())
+	}
+
+	defer connection.Close()
+
+	_, err = connection.Write([]byte("This is a UDP Message, you fag"))
+	if err != nil {
+		log.Panic("Error: ", err.Error())
+	}
+
+	//Get data to buffer
+	recv := make([]byte, 1024)
+	_, err = connection.Read(recv)
+	if err != nil {
+		log.Panic("Error: ", err.Error())
+	}
+
+	fmt.Println(string(recv))
 }
