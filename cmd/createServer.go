@@ -57,10 +57,12 @@ func listenServer() {
 		}
 		//get the goroutine here:
 		go response(server, addr, buf)
+
 	}
 }
 
 func response(server net.PacketConn, addr net.Addr, buffer []byte) {
+
 	time := time.Now().Format(time.ANSIC)
 	respStr := fmt.Sprintf("Time: %v. Message: %v!\n", time, string(buffer))
 	server.WriteTo([]byte(respStr), addr)

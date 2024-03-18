@@ -4,9 +4,11 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -14,13 +16,8 @@ import (
 // connectCmd represents the connect command
 var connectCmd = &cobra.Command{
 	Use:   "connect",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Connect to the server using the UDP protocol",
+	Long:  `You can send messages to the UDP server, and the server responds back.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		//fmt.Println("connect called")
 		connectToServer()
@@ -53,19 +50,32 @@ func connectToServer() {
 		log.Panic("Listen Failed: ", err.Error())
 	}
 
+	sendMessage(connection)
 	defer connection.Close()
 
-	_, err = connection.Write([]byte("This is a UDP Message, you fag"))
-	if err != nil {
-		log.Panic("Error: ", err.Error())
-	}
+}
 
-	//Get data to buffer
-	recv := make([]byte, 1024)
-	_, err = connection.Read(recv)
-	if err != nil {
-		log.Panic("Error: ", err.Error())
-	}
+func sendMessage(connection *net.UDPConn) {
+	for {
+		//Write a message
+		fmt.Println("Type a message: ")
+		reader := bufio.NewReader(os.Stdin)
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			log.Fatal("Failed to retreive user input: ", err.Error())
+		}
+		_, err = connection.Write([]byte(line))
+		if err != nil {
+			log.Fatal("Error: ", err.Error())
+		}
 
-	fmt.Println(string(recv))
+		//Make a receiver and get the message handler server response
+		recv := make([]byte, 1024)
+		n, _, err := connection.ReadFromUDP(recv)
+		if err != nil {
+			log.Fatal("Error: ", err.Error())
+		}
+
+		fmt.Println(string(recv[:n]))
+	}
 }
